@@ -1,0 +1,21 @@
+# Ignore frontend files when deploying backend
+frontend/
+node_modules/
+*.log
+.env
+.env.local
+.env.production
+.env.development
+
+# Ignore data directories (they will be created at runtime)
+data/
+uploads/
+exports/
+
+# Ignore development files
+.git/
+.gitignore
+README.md
+DEPLOYMENT.md
+NETLIFY_DEPLOYMENT.md
+QUICK_DEPLOY.md
