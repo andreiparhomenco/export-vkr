@@ -3,8 +3,13 @@ import { Upload, Download, AlertCircle, CheckCircle, Loader2 } from 'lucide-reac
 import FileList from './components/FileList';
 import MetadataForm from './components/MetadataForm';
 import Instructions from './components/Instructions';
+import TestConnection from './TestConnection';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+
+// Отладочная информация
+console.log('Environment variables:', import.meta.env);
+console.log('API_BASE:', API_BASE);
 
 function App() {
   const [files, setFiles] = useState([]);
@@ -21,28 +26,58 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [warnings, setWarnings] = useState([]);
+  const [error, setError] = useState(null);
+
+  // Обработка глобальных ошибок
+  React.useEffect(() => {
+    const handleError = (error) => {
+      console.error('Global error:', error);
+      setError(error.message);
+    };
+
+    window.addEventListener('error', handleError);
+    window.addEventListener('unhandledrejection', (event) => {
+      console.error('Unhandled promise rejection:', event.reason);
+      setError(event.reason?.message || 'Unknown error');
+    });
+
+    return () => {
+      window.removeEventListener('error', handleError);
+      window.removeEventListener('unhandledrejection', handleError);
+    };
+  }, []);
 
   const handleFileUpload = useCallback(async (event) => {
     const selectedFiles = Array.from(event.target.files);
     if (selectedFiles.length === 0) return;
 
+    console.log('Starting file upload...', { API_BASE, selectedFiles });
     setLoading(true);
+    
     try {
       const formData = new FormData();
       selectedFiles.forEach(file => {
         formData.append('files', file);
       });
 
+      console.log('Sending request to:', `${API_BASE}/api/upload`);
+      
       const response = await fetch(`${API_BASE}/api/upload`, {
         method: 'POST',
         body: formData,
       });
 
+      console.log('Response received:', { status: response.status, statusText: response.statusText });
+
       if (!response.ok) {
-        throw new Error(`Upload failed: ${response.statusText}`);
+        const errorText = await response.text();
+        console.error('Response error:', errorText);
+        throw new Error(`Upload failed: ${response.statusText} - ${errorText}`);
       }
 
       const data = await response.json();
+      console.log('Upload successful:', data);
+      
       setSessionId(data.session_id);
       setFiles(data.files);
       setOrder(data.files.map(f => f.id));
@@ -54,7 +89,7 @@ function App() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [API_BASE]);
 
   const handleReorder = useCallback((newOrder) => {
     setOrder(newOrder);
@@ -166,11 +201,36 @@ function App() {
           <p className="text-gray-600">
             Простой и надёжный прототип для экспорта выпускных квалификационных работ
           </p>
+          {API_BASE && (
+            <p className="text-sm text-gray-500 mt-2">
+              Backend: {API_BASE}
+            </p>
+          )}
         </div>
+
+        {/* Error Display */}
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            <div className="flex">
+              <AlertCircle className="h-5 w-5 mr-2" />
+              <div>
+                <strong>Ошибка:</strong> {error}
+                <button 
+                  onClick={() => setError(null)}
+                  className="ml-4 text-red-500 hover:text-red-700"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
+            {/* Test Connection */}
+            <TestConnection />
             {/* File Upload */}
             <div className="card">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Загрузка файлов</h2>
