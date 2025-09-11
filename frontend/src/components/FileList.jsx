@@ -2,7 +2,11 @@ import React from 'react';
 import { ArrowUp, ArrowDown, FileText, Image, File, X } from 'lucide-react';
 
 const FileList = ({ files, order, onReorder, onRemove }) => {
+  // Отладочная информация
+  console.log('FileList props:', { files, order });
   const getFileIcon = (fileName) => {
+    if (!fileName) return <File className="h-5 w-5 text-gray-600" />;
+    
     const extension = fileName.split('.').pop()?.toLowerCase();
     switch (extension) {
       case 'docx':
@@ -51,16 +55,21 @@ const FileList = ({ files, order, onReorder, onRemove }) => {
       <div className="space-y-2">
         {order.map((fileId, index) => {
           const file = files.find(f => f.id === fileId);
-          if (!file) return null;
+          if (!file) {
+            console.warn('File not found for ID:', fileId);
+            return null;
+          }
+
+          console.log('Rendering file:', file);
 
           return (
             <div key={fileId} className="file-item">
               <div className="flex items-center gap-3">
                 {getFileIcon(file.name)}
                 <div className="flex-1">
-                  <p className="font-medium text-gray-900">{file.name}</p>
+                  <p className="font-medium text-gray-900">{file.name || 'Без имени'}</p>
                   <p className="text-sm text-gray-500">
-                    {file.type.toUpperCase()} • {index + 1} в порядке
+                    {file.type ? file.type.toUpperCase() : 'НЕИЗВЕСТНО'} • {index + 1} в порядке
                   </p>
                 </div>
               </div>

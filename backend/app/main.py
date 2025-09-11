@@ -120,7 +120,7 @@ async def upload_files(
         
         return UploadResponse(
             session_id=session_id,
-            files=[{"id": r["id"], "name": r["name"]} for r in file_records]
+            files=[{"id": r["id"], "name": r["name"], "type": r["type"]} for r in file_records]
         )
         
     except Exception as e:
