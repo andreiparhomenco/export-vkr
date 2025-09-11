@@ -15,7 +15,7 @@
 1. **Railway автоматически определит** что это Python проект
 2. **Убедитесь, что настройки правильные:**
    - **Root Directory**: `backend` (важно!)
-   - **Build Command**: `pip install -r requirements.txt`
+   - **Build Command**: Оставьте пустым (Railway определит автоматически)
    - **Start Command**: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
 
 ### Шаг 3: Переменные окружения
