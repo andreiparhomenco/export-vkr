@@ -4,7 +4,7 @@ import FileList from './components/FileList';
 import MetadataForm from './components/MetadataForm';
 import Instructions from './components/Instructions';
 
-const API_BASE = 'http://127.0.0.1:8000';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
 function App() {
   const [files, setFiles] = useState([]);
