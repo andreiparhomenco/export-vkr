@@ -7,6 +7,8 @@
 [build.environment]
   # Версия Node.js
   NODE_VERSION = "18"
+  # API URL для backend (будет переопределен в Netlify Dashboard)
+  VITE_API_URL = "https://export-vkr-production.up.railway.app"
 
 # Перенаправления для SPA
 [[redirects]]

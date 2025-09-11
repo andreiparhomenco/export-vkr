@@ -24,8 +24,10 @@
 В разделе **Site settings > Environment variables** добавьте:
 
 ```
-VITE_API_URL = https://your-backend-url.herokuapp.com
+VITE_API_URL = https://export-vkr-production.up.railway.app
 ```
+
+**Примечание:** Переменная уже настроена в `netlify.toml`, но для надежности добавьте ее и в Dashboard.
 
 ## 🔧 Настройка Backend
 
