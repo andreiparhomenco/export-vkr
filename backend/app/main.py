@@ -21,8 +21,13 @@ from .services.merger import merge_pdfs
 from .services.validator import validate_files, validate_metadata, validate_file_order
 
 # Configure logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
+logger.info("=== VKR Export System Starting ===")
+logger.info(f"Python path: {os.environ.get('PYTHONPATH', 'Not set')}")
+logger.info(f"Current working directory: {os.getcwd()}")
+logger.info(f"Python executable: {os.sys.executable}")
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -48,10 +53,20 @@ app.add_middleware(
 # Initialize database on startup
 @app.on_event("startup")
 async def startup_event():
+    logger.info("=== STARTUP EVENT TRIGGERED ===")
     logger.info("Starting VKR Export System...")
-    init_db()
-    logger.info("Database initialized successfully")
-    logger.info("VKR Export System started successfully")
+    logger.info(f"Data root: {DATA_ROOT}")
+    logger.info(f"Upload root: {UPLOAD_ROOT}")
+    logger.info(f"Export root: {EXPORT_ROOT}")
+    
+    try:
+        init_db()
+        logger.info("Database initialized successfully")
+        logger.info("VKR Export System started successfully")
+        logger.info("=== STARTUP COMPLETE ===")
+    except Exception as e:
+        logger.error(f"Startup failed: {str(e)}")
+        raise
 
 # Configuration
 BASE_DIR = Path(__file__).parent.parent.parent
