@@ -55,3 +55,5 @@ git subtree push --prefix backend heroku main
 1. **Проверьте CORS** в backend (должен разрешать запросы с Netlify)
 2. **Проверьте переменные окружения** в Netlify
 3. **Проверьте логи** в Railway/Render/Heroku
+
+

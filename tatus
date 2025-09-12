@@ -1,0 +1,5 @@
+[33m0c22c51[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m Fix FileList error - add type field to backend response and error handling
+[33mf0cc015[m Add debugging and error handling for white screen issue
+[33m330e2c8[m Configure project for automatic deployment with Railway backend URL
+[33m6d39f3a[m Simplify Railway deployment - add root-level Python files for auto-detection
+[33mbbb6b97[m Fix Railway configuration for backend directory detection

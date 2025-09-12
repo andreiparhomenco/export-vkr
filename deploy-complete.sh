@@ -49,3 +49,5 @@ echo "🔗 Ссылки:"
 echo "   - GitHub: https://github.com/andreiparhomenco/export-vkr"
 echo "   - Railway: https://railway.app"
 echo "   - Netlify: https://netlify.com"
+
+

@@ -18,7 +18,8 @@
 - Python 3.11
 - FastAPI
 - SQLModel + SQLite
-- LibreOffice (для конвертации DOCX)
+- LibreOffice (для конвертации DOCX, основной метод)
+- docx2pdf (fallback для конвертации DOCX)
 - Pillow (для конвертации изображений)
 - pypdf (для объединения PDF)
 
@@ -165,6 +166,7 @@ quick-export-vkr/
 ### LibreOffice не найден
 - Убедитесь, что LibreOffice установлен
 - Проверьте, что команда `soffice` доступна в PATH
+- Система автоматически переключится на docx2pdf как fallback
 
 ### Ошибки конвертации
 - Проверьте логи в консоли браузера
