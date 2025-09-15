@@ -57,3 +57,5 @@ git subtree push --prefix backend heroku main
 3. **Проверьте логи** в Railway/Render/Heroku
 
 
+
+

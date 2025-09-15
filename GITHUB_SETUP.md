@@ -71,3 +71,5 @@ git checkout main
 # Слить ветку
 git merge feature/new-feature
 ```
+
+
