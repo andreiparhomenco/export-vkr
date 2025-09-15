@@ -67,6 +67,8 @@ def convert_docx_to_pdf(docx_path: str, output_dir: str) -> str:
         base_name = Path(docx_path).stem
         output_pdf = os.path.join(output_dir, f"{base_name}.pdf")
         
+        logger.info(f"Converting DOCX: {docx_path} -> {output_pdf}")
+        
         # Try LibreOffice first
         cmd = [
             "soffice",
@@ -76,43 +78,62 @@ def convert_docx_to_pdf(docx_path: str, output_dir: str) -> str:
             docx_path
         ]
         
+        logger.info(f"Running LibreOffice command: {' '.join(cmd)}")
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+        
+        logger.info(f"LibreOffice result: returncode={result.returncode}, stdout={result.stdout}, stderr={result.stderr}")
         
         if result.returncode == 0 and os.path.exists(output_pdf):
             logger.info(f"Successfully converted DOCX to PDF using LibreOffice: {output_pdf}")
             return output_pdf
         else:
             # Fallback to docx2pdf
-            from docx2pdf import convert
-            convert(docx_path, output_pdf)
-            logger.info(f"Successfully converted DOCX to PDF using docx2pdf: {output_pdf}")
-            return output_pdf
+            logger.info("LibreOffice failed, trying docx2pdf fallback")
+            try:
+                from docx2pdf import convert
+                convert(docx_path, output_pdf)
+                logger.info(f"Successfully converted DOCX to PDF using docx2pdf: {output_pdf}")
+                return output_pdf
+            except Exception as e2:
+                logger.error(f"docx2pdf also failed: {str(e2)}")
+                raise Exception(f"Both LibreOffice and docx2pdf failed. LibreOffice: {result.stderr}, docx2pdf: {str(e2)}")
             
     except Exception as e:
-        logger.error(f"Failed to convert DOCX to PDF: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Failed to convert DOCX: {str(e)}")
+        logger.error(f"Failed to convert DOCX to PDF: {str(e)}", exc_info=True)
+        raise Exception(f"Failed to convert DOCX: {str(e)}")
 
 def convert_image_to_pdf(image_path: str, output_pdf: str):
     """Convert image to PDF"""
     try:
+        logger.info(f"Converting image: {image_path} -> {output_pdf}")
+        
         with Image.open(image_path) as img:
+            logger.info(f"Image info: size={img.size}, mode={img.mode}, format={img.format}")
+            
             # Convert to RGB if necessary
             if img.mode != 'RGB':
+                logger.info(f"Converting image mode from {img.mode} to RGB")
                 img = img.convert('RGB')
+            
             img.save(output_pdf, 'PDF')
-        logger.info(f"Successfully converted image to PDF: {output_pdf}")
+            logger.info(f"Successfully converted image to PDF: {output_pdf}")
     except Exception as e:
-        logger.error(f"Failed to convert image to PDF: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Failed to convert image: {str(e)}")
+        logger.error(f"Failed to convert image to PDF: {str(e)}", exc_info=True)
+        raise Exception(f"Failed to convert image: {str(e)}")
 
 def merge_pdfs(pdf_paths: List[str], output_path: str):
     """Merge multiple PDFs into one"""
     try:
+        logger.info(f"Merging PDFs: {pdf_paths} -> {output_path}")
+        
         merger = pypdf.PdfMerger()
         
-        for pdf_path in pdf_paths:
+        for i, pdf_path in enumerate(pdf_paths):
             if os.path.exists(pdf_path):
+                logger.info(f"Adding PDF {i+1}/{len(pdf_paths)}: {pdf_path}")
                 merger.append(pdf_path)
+            else:
+                logger.warning(f"PDF file not found: {pdf_path}")
         
         with open(output_path, 'wb') as output_file:
             merger.write(output_file)
@@ -120,8 +141,8 @@ def merge_pdfs(pdf_paths: List[str], output_path: str):
         merger.close()
         logger.info(f"Successfully merged PDFs to: {output_path}")
     except Exception as e:
-        logger.error(f"Failed to merge PDFs: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Failed to merge PDFs: {str(e)}")
+        logger.error(f"Failed to merge PDFs: {str(e)}", exc_info=True)
+        raise Exception(f"Failed to merge PDFs: {str(e)}")
 
 @app.get("/")
 async def root():
@@ -190,26 +211,38 @@ async def upload_files(files: List[UploadFile] = File(...)):
 async def prepare_export(request_data: dict):
     """Prepare export endpoint - process files and create PDF"""
     try:
+        logger.info(f"Prepare export request: {request_data}")
+        
         session_id = request_data.get("session_id")
         files = request_data.get("files", [])
         metadata = request_data.get("metadata", {})
         
+        logger.info(f"Session ID: {session_id}")
+        logger.info(f"Files count: {len(files)}")
+        logger.info(f"Available sessions: {list(sessions.keys())}")
+        
         if session_id not in sessions:
+            logger.error(f"Session {session_id} not found in {list(sessions.keys())}")
             raise HTTPException(status_code=404, detail="Session not found")
         
         session = sessions[session_id]
         temp_dir = session["temp_dir"]
+        logger.info(f"Using temp directory: {temp_dir}")
         
         # Create output directory
         output_dir = os.path.join(temp_dir, "output")
         os.makedirs(output_dir, exist_ok=True)
+        logger.info(f"Created output directory: {output_dir}")
         
         # Process files in order
         pdf_paths = []
         
-        for file_info in files:
+        for i, file_info in enumerate(files):
+            logger.info(f"Processing file {i+1}/{len(files)}: {file_info}")
+            
             file_id = file_info["id"]
             file_path = None
+            file_type = None
             
             # Find file path
             for f in session["files"]:
@@ -218,29 +251,45 @@ async def prepare_export(request_data: dict):
                     file_type = f["type"]
                     break
             
+            logger.info(f"File path: {file_path}, type: {file_type}")
+            
             if not file_path or not os.path.exists(file_path):
+                logger.warning(f"File not found or doesn't exist: {file_path}")
                 continue
             
-            if file_type == "pdf":
-                # PDF files - use directly
-                pdf_paths.append(file_path)
-            elif file_type == "docx":
-                # Convert DOCX to PDF
-                pdf_path = convert_docx_to_pdf(file_path, output_dir)
-                pdf_paths.append(pdf_path)
-            elif file_type == "image":
-                # Convert image to PDF
-                pdf_path = os.path.join(output_dir, f"{Path(file_path).stem}.pdf")
-                convert_image_to_pdf(file_path, pdf_path)
-                pdf_paths.append(pdf_path)
+            try:
+                if file_type == "pdf":
+                    # PDF files - use directly
+                    logger.info(f"Using PDF directly: {file_path}")
+                    pdf_paths.append(file_path)
+                elif file_type == "docx":
+                    # Convert DOCX to PDF
+                    logger.info(f"Converting DOCX to PDF: {file_path}")
+                    pdf_path = convert_docx_to_pdf(file_path, output_dir)
+                    pdf_paths.append(pdf_path)
+                elif file_type == "image":
+                    # Convert image to PDF
+                    logger.info(f"Converting image to PDF: {file_path}")
+                    pdf_path = os.path.join(output_dir, f"{Path(file_path).stem}.pdf")
+                    convert_image_to_pdf(file_path, pdf_path)
+                    pdf_paths.append(pdf_path)
+                else:
+                    logger.warning(f"Unknown file type: {file_type}")
+            except Exception as e:
+                logger.error(f"Error processing file {file_path}: {str(e)}")
+                continue
+        
+        logger.info(f"Successfully processed {len(pdf_paths)} files: {pdf_paths}")
         
         # Merge all PDFs
         export_id = str(uuid.uuid4())
         final_pdf_path = os.path.join(output_dir, f"export_{export_id}.pdf")
         
         if pdf_paths:
+            logger.info(f"Merging PDFs to: {final_pdf_path}")
             merge_pdfs(pdf_paths, final_pdf_path)
         else:
+            logger.error("No valid files to process")
             raise HTTPException(status_code=400, detail="No valid files to process")
         
         # Store export info
@@ -248,14 +297,18 @@ async def prepare_export(request_data: dict):
         session["final_pdf_path"] = final_pdf_path
         session["metadata"] = metadata
         
+        logger.info(f"Export prepared successfully: {export_id}")
+        
         return {
             "export_id": export_id,
             "status": "prepared",
             "message": f"Successfully processed {len(pdf_paths)} files into PDF"
         }
         
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"Prepare export error: {str(e)}")
+        logger.error(f"Prepare export error: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to prepare export: {str(e)}")
 
 @app.get("/api/download/{export_id}")
