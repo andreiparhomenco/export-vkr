@@ -82,6 +82,51 @@ async def upload_files():
         "status": "ok"
     }
 
+@app.post("/api/prepare")
+async def prepare_export():
+    """Prepare export endpoint - simplified version"""
+    import uuid
+    
+    export_id = str(uuid.uuid4())
+    
+    return {
+        "export_id": export_id,
+        "status": "prepared",
+        "message": "Export prepared successfully"
+    }
+
+@app.get("/api/download/{export_id}")
+async def download_pdf(export_id: str):
+    """Download PDF endpoint - simplified version"""
+    # Return a simple text response for now
+    from fastapi.responses import PlainTextResponse
+    return PlainTextResponse(
+        content="Mock PDF content - this is a placeholder",
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename=export_{export_id}.pdf"}
+    )
+
+@app.get("/api/metadata/{export_id}")
+async def download_metadata(export_id: str):
+    """Download metadata endpoint - simplified version"""
+    import json
+    
+    mock_metadata = {
+        "export_id": export_id,
+        "title": "Test VKR Title",
+        "author": "Test Author",
+        "year": 2024,
+        "supervisor": "Test Supervisor",
+        "faculty": "Test Faculty",
+        "form_of_study": "full-time"
+    }
+    
+    from fastapi.responses import JSONResponse
+    return JSONResponse(
+        content=mock_metadata,
+        headers={"Content-Disposition": f"attachment; filename=metadata_{export_id}.json"}
+    )
+
 if __name__ == "__main__":
     import uvicorn
     port = int(os.environ.get("PORT", 8000))
