@@ -4,7 +4,8 @@ Simple version of main.py for Railway deployment testing
 """
 import os
 import logging
-from fastapi import FastAPI
+from typing import List
+from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 
 # Configure logging
@@ -58,27 +59,33 @@ async def health_check():
     }
 
 @app.post("/api/upload")
-async def upload_files():
+async def upload_files(files: List[UploadFile] = File(...)):
     """Upload endpoint - simplified version"""
     import uuid
     
     # Create a mock response that matches what frontend expects
     session_id = str(uuid.uuid4())
     
-    # Mock file data structure
-    mock_files = [
-        {
+    # Process uploaded files
+    uploaded_files = []
+    for file in files:
+        # Read file content to get size
+        content = await file.read()
+        
+        # Determine file type from extension
+        file_extension = file.filename.split('.')[-1].lower() if '.' in file.filename else 'unknown'
+        
+        uploaded_files.append({
             "id": str(uuid.uuid4()),
-            "name": "test_file.docx",
-            "type": "docx",
-            "size": 1024
-        }
-    ]
+            "name": file.filename,
+            "type": file_extension,
+            "size": len(content)
+        })
     
     return {
         "session_id": session_id,
-        "files": mock_files,
-        "message": "Upload endpoint is working",
+        "files": uploaded_files,
+        "message": f"Uploaded {len(uploaded_files)} files successfully",
         "status": "ok"
     }
 
