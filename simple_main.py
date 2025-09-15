@@ -60,7 +60,27 @@ async def health_check():
 @app.post("/api/upload")
 async def upload_files():
     """Upload endpoint - simplified version"""
-    return {"message": "Upload endpoint is working", "status": "ok"}
+    import uuid
+    
+    # Create a mock response that matches what frontend expects
+    session_id = str(uuid.uuid4())
+    
+    # Mock file data structure
+    mock_files = [
+        {
+            "id": str(uuid.uuid4()),
+            "name": "test_file.docx",
+            "type": "docx",
+            "size": 1024
+        }
+    ]
+    
+    return {
+        "session_id": session_id,
+        "files": mock_files,
+        "message": "Upload endpoint is working",
+        "status": "ok"
+    }
 
 if __name__ == "__main__":
     import uvicorn
