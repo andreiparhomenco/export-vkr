@@ -333,7 +333,12 @@ async def get_metadata(export_id: str):
 @app.get("/")
 async def root():
     """Root endpoint"""
-    return {"message": "VKR Export System MVP", "version": "1.0.0"}
+    return {
+        "message": "VKR Export System MVP", 
+        "version": "1.0.0",
+        "status": "running",
+        "service": "vkr-export-api"
+    }
 
 @app.get("/health")
 async def health_check():
