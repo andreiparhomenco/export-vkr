@@ -338,21 +338,8 @@ async def root():
 @app.get("/health")
 async def health_check():
     """Health check endpoint"""
-    try:
-        # Check if data directories exist
-        if not DATA_ROOT.exists():
-            DATA_ROOT.mkdir(parents=True, exist_ok=True)
-        if not UPLOAD_ROOT.exists():
-            UPLOAD_ROOT.mkdir(parents=True, exist_ok=True)
-        if not EXPORT_ROOT.exists():
-            EXPORT_ROOT.mkdir(parents=True, exist_ok=True)
-        
-        return {
-            "status": "healthy", 
-            "service": "vkr-export-api",
-            "timestamp": str(uuid.uuid4()),
-            "version": "1.0.0"
-        }
-    except Exception as e:
-        logger.error(f"Health check failed: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Health check failed: {str(e)}")
+    return {
+        "status": "healthy", 
+        "service": "vkr-export-api",
+        "version": "1.0.0"
+    }
