@@ -3,7 +3,7 @@ import { Upload, Download, AlertCircle, CheckCircle, Loader2 } from 'lucide-reac
 import FileList from './components/FileList';
 import MetadataForm from './components/MetadataForm';
 import Instructions from './components/Instructions';
-import TestConnection from './TestConnection';
+// Removed TestConnection in production
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
@@ -196,16 +196,12 @@ function App() {
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Экспорт ВКР → PDF (MVP)
+            Экспорт ВКР → PDF
           </h1>
           <p className="text-gray-600">
             Простой и надёжный прототип для экспорта выпускных квалификационных работ
           </p>
-          {API_BASE && (
-            <p className="text-sm text-gray-500 mt-2">
-              Backend: {API_BASE}
-            </p>
-          )}
+          {/* Backend URL hidden in production */}
         </div>
 
         {/* Error Display */}
@@ -229,8 +225,7 @@ function App() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Test Connection */}
-            <TestConnection />
+            {/* Test Connection removed */}
             {/* File Upload */}
             <div className="card">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Загрузка файлов</h2>

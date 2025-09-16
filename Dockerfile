@@ -20,8 +20,8 @@ COPY backend/requirements.txt backend/
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy simple main file
-COPY simple_main.py .
+# Copy application code
+COPY backend/ .
 
 # Create data directories
 RUN mkdir -p /app/data/uploads /app/data/exports
@@ -38,6 +38,6 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
 # Run the application
-CMD ["python", "simple_main.py"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
 
 # Force redeploy - main VKR Export System
