@@ -214,11 +214,14 @@ async def prepare_export(request_data: dict):
         logger.info(f"Prepare export request: {request_data}")
         
         session_id = request_data.get("session_id")
+        # Frontend sends 'order' as an array of file ids in the desired order
+        order_ids = request_data.get("order", [])
+        # Backward compatibility: some clients might still send full 'files' list
         files = request_data.get("files", [])
         metadata = request_data.get("metadata", {})
         
         logger.info(f"Session ID: {session_id}")
-        logger.info(f"Files count: {len(files)}")
+        logger.info(f"Order count: {len(order_ids)} | Files payload count: {len(files)}")
         logger.info(f"Available sessions: {list(sessions.keys())}")
         
         if session_id not in sessions:
@@ -234,22 +237,43 @@ async def prepare_export(request_data: dict):
         os.makedirs(output_dir, exist_ok=True)
         logger.info(f"Created output directory: {output_dir}")
         
-        # Process files in order
+        # Build an ordered list of file dicts from the stored session using the provided order_ids
+        ordered_files: List[dict] = []
+        id_to_file = {f["id"]: f for f in session["files"]}
+        
+        # Prefer 'order' from the client; if empty, fall back to provided 'files' array
+        if order_ids:
+            for file_id in order_ids:
+                if file_id in id_to_file:
+                    ordered_files.append(id_to_file[file_id])
+                else:
+                    logger.warning(f"File id from order not found in session: {file_id}")
+        else:
+            # When clients send full files array, map by id
+            for f in files:
+                file_id = f.get("id")
+                if file_id in id_to_file:
+                    ordered_files.append(id_to_file[file_id])
+                else:
+                    logger.warning(f"File id from files payload not found in session: {file_id}")
+
+        logger.info(f"Resolved ordered files: {[f['name'] for f in ordered_files]}")
+
+        # Process files in resolved order
         pdf_paths = []
         
-        for i, file_info in enumerate(files):
-            logger.info(f"Processing file {i+1}/{len(files)}: {file_info}")
+        for i, file_info in enumerate(ordered_files):
+            logger.info(f"Processing file {i+1}/{len(ordered_files)}: {file_info}")
             
             file_id = file_info["id"]
             file_path = None
             file_type = None
             
             # Find file path
-            for f in session["files"]:
-                if f["id"] == file_id:
-                    file_path = f["path"]
-                    file_type = f["type"]
-                    break
+            file_record = id_to_file.get(file_id)
+            if file_record:
+                file_path = file_record.get("path")
+                file_type = file_record.get("type")
             
             logger.info(f"File path: {file_path}, type: {file_type}")
             
