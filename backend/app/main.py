@@ -69,13 +69,16 @@ async def startup_event():
         raise
 
 # Configuration
-BASE_DIR = Path(__file__).parent.parent.parent
+# Ensure BASE_DIR points to the application root (i.e., /app inside the container)
+# Previously this used parent.parent.parent which resolved to '/', causing path issues.
+BASE_DIR = Path(__file__).resolve().parent.parent
 DATA_ROOT = BASE_DIR / "data"
 UPLOAD_ROOT = DATA_ROOT / "uploads"
 EXPORT_ROOT = DATA_ROOT / "exports"
 MAX_FILE_SIZE_MB = 100
 
-# Ensure directories exist
+# Ensure directories exist (create DATA_ROOT and subdirs)
+DATA_ROOT.mkdir(parents=True, exist_ok=True)
 UPLOAD_ROOT.mkdir(parents=True, exist_ok=True)
 EXPORT_ROOT.mkdir(parents=True, exist_ok=True)
 
